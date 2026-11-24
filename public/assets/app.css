@@ -1,0 +1,6 @@
+body { background: #f4f6fa; }
+.navbar-brand { font-weight: 600; }
+.card { border: 0; box-shadow: 0 1px 4px rgba(0,0,0,.08); }
+.stat { font-size: 2rem; font-weight: 700; }
+.auth-card { max-width: 440px; margin: 4rem auto; }
+.mono { font-family: ui-monospace, Menlo, Consolas, monospace; font-size: .8rem; word-break: break-all; }
