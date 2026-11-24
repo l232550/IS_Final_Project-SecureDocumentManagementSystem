@@ -1,0 +1,35 @@
+PHPUnit 9.6.17 by Sebastian Bergmann and contributors.
+
+Crypto Service
+ ✔ Round trip
+ ✔ Nonce is fresh every time
+ ✔ Flipped ciphertext bit is rejected
+ ✔ Wrong key or wrong aad is rejected
+ ✔ Argon 2id is used for passwords
+
+Security Scenarios
+ ✔ T 1 unauthorized document access is denied
+ ✔ T 2 identifier manipulation does not leak documents
+ ✔ T 3 storage exposure reveals nothing
+ ✔ T 3 wrapped dek cannot be unwrapped with wrong kek
+ ✔ T 4 modified ciphertext is detected
+ ✔ T 4 ciphertext swap between documents is detected
+ ✔ T 5 viewer cannot edit delete share or download
+ ✔ Admin has no automatic access to document contents
+ ✔ Editor can update but not delete
+ ✔ T 6 revoked user loses access immediately
+ ✔ Expired permission is denied
+ ✔ T 7 untouched audit chain verifies
+ ✔ T 7 modified audit record is detected
+ ✔ T 7 deleted middle record breaks the chain
+ ✔ T 7 deleted last records are detected by anchor
+ ✔ Upload validation rejects dangerous files
+ ✔ Oversize file is rejected
+ ✔ Key rotation rewraps deks and documents still decrypt
+ ✔ Key setup refuses to overwrite existing keys
+ ✔ Audit records contain no secrets
+ ✔ Login lockout after repeated failures
+
+Time: 00:07.323, Memory: 16.00 MB
+
+OK (26 tests, 61 assertions)

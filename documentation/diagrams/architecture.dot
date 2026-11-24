@@ -1,0 +1,16 @@
+digraph G { rankdir=LR; fontname="Helvetica"; node [fontname="Helvetica", shape=box, style="rounded,filled", fillcolor="#eef3fb", color="#4a6fa5"]; edge [fontname="Helvetica", fontsize=10];
+ user [label="User / Admin\n(Browser)", fillcolor="#fff4d6", color="#b08900"];
+ subgraph cluster_web { label="Apache + PHP 8.3 (public/ is the only web root)"; style="rounded,dashed"; color="#888888";
+   fc [label="public/index.php\nFront controller\n(headers, session, router)"];
+   subgraph cluster_p { label="Presentation layer"; color="#bbbbbb"; ctl [label="controllers/\nAuth, Dashboard,\nDocument, Share, Admin"]; views [label="views/\nBootstrap 5 + e()"]; }
+   subgraph cluster_b { label="Business logic layer"; color="#bbbbbb";
+     authz [label="AuthorizationService\n(RBAC + doc-level)"]; docs [label="DocumentService\nShareService\nAuthService"]; upl [label="UploadValidator"];
+     crypto [label="CryptoService\nKeyManager\n(AES-256-GCM, DEK/KEK)"]; audit [label="AuditService\n(HMAC-SHA-256 chain)"]; }
+   subgraph cluster_d { label="Data access layer (PDO prepared statements)"; color="#bbbbbb"; repos [label="repositories/"]; store [label="StorageService"]; }
+ }
+ mysql [label="MySQL\nusers, documents (metadata,\nwrapped DEK, nonces, tags),\npermissions, audit_logs", shape=cylinder, fillcolor="#e3f5e1", color="#3a7d34"];
+ files [label="private_storage/documents/\n<uuid>.enc\n(ciphertext only)", shape=folder, fillcolor="#fde2e2", color="#aa3333"];
+ keys [label="private_storage/keys/\nKEK v1..n, HMAC key\n(chmod 600, outside web root)", shape=folder, fillcolor="#fde2e2", color="#aa3333"];
+ user -> fc [label="HTTPS"]; fc -> ctl; ctl -> views; ctl -> docs; docs -> authz; docs -> upl; docs -> crypto; docs -> audit; docs -> repos; docs -> store;
+ repos -> mysql [label="SQL"]; audit -> mysql [label="INSERT (own DB user)"]; store -> files; crypto -> keys [label="read"]; audit -> keys [label="HMAC key"];
+}

@@ -1,0 +1,12 @@
+digraph G { rankdir=TB; fontname="Helvetica"; node [fontname="Helvetica", shape=box, style="rounded,filled", fillcolor="#eef3fb", color="#4a6fa5"]; edge [fontname="Helvetica", fontsize=10];
+ csprng [label="CSPRNG\nrandom_bytes()", shape=ellipse, fillcolor="#fff4d6"];
+ kek [label="KEK (v1..n) 256-bit\nprivate_storage/keys/ (chmod 600)\nNEVER in MySQL / source code", fillcolor="#fde2e2", color="#aa3333"];
+ dek [label="DEK 256-bit\nnew for every document\n(held in memory only)"];
+ doc [label="Document plaintext\n(PDF / DOCX / TXT)"];
+ ct [label="<uuid>.enc\nciphertext on private disk", shape=folder, fillcolor="#fde2e2", color="#aa3333"];
+ db [label="MySQL documents row:\ndoc_nonce(12) + auth_tag(16)\nwrapped_dek(32) + dek_nonce(12) + dek_tag(16)\nsha256_fingerprint, key_version", shape=cylinder, fillcolor="#e3f5e1", color="#3a7d34"];
+ csprng -> dek; csprng -> kek [label="setup once"];
+ doc -> ct [label="AES-256-GCM(DEK, nonce1, AAD=doc|uuid)"]; dek -> ct [style=dashed];
+ dek -> db [label="AES-256-GCM(KEK, nonce2,\nAAD=dek|uuid|ver) = wrapped_dek"]; kek -> db [style=dashed];
+ doc -> db [label="SHA-256 fingerprint"];
+}

@@ -1,0 +1,22 @@
+[PASS] alice views own document                             got=200 expected=200
+[PASS] bob views alice's document (T1)                      got=403 expected=403
+[PASS] bob guesses non-existent id (T2)                     got=403 expected=403
+[PASS] anonymous request redirected to login                got=302 expected=302
+[PASS] POST delete without CSRF token                       got=403 expected=403
+[PASS] disallowed HTTP method (GET on POST route)           got=405 expected=405
+[PASS] bob (viewer) views after share                       got=200 expected=200
+[PASS] bob downloads without download flag (T5)             got=403 expected=403
+[PASS] bob opens update page as viewer (T5)                 got=403 expected=403
+[PASS] bob deletes as viewer (T5)                           got=403 expected=403
+[PASS] bob opens share page (T5)                            got=403 expected=403
+[PASS] admin opens alice's document                         got=403 expected=403
+[PASS] bob views after revoke (T6)                          got=403 expected=403
+[PASS] bob (editor+download) downloads                      got=200 expected=200
+[PASS] bob after permission expiry                          got=403 expected=403
+[PASS] normal user opens admin audit page                   got=403 expected=403
+[PASS] reset token issued to server log (64 hex chars)      got=64 expected=64
+[PASS] carol can sign in with the NEW password              got=1 expected=1
+[PASS] reset link cannot be used a second time              got=1 expected=1
+[PASS] correct password refused while locked out            got=0 expected=0
+[INFO] admin audit verification: Audit chain verified: 35 records
+[INFO] cookie flags: Set-Cookie: SDMSSESSID=eki0u3tje9u0a1u5aubd7q0k00; path=/; HttpOnly; SameSite=Strict

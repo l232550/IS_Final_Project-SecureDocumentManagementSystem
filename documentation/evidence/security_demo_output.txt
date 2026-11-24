@@ -1,0 +1,107 @@
+
+==============================================================================
+TEST 1: Unauthorized document access
+==============================================================================
+Threat      : A logged-in user reads another user's private document
+Asset       : Document #1 owned by alice
+bob views doc -> DENIED (Access denied.)
+bob downloads doc -> DENIED (Access denied.)
+alice views doc -> ALLOWED  (owner, expected)
+Audit trail:
+  #1   document_upload        user=1   doc=1   success  hmac=b567e89b7ebc...
+  #2   unauthorized_access    user=2   doc=1   denied   hmac=a7b3bd8f18b6...
+  #3   unauthorized_access    user=2   doc=1   denied   hmac=121a9029deea...
+  #4   document_view          user=1   doc=1   success  hmac=332439e67913...
+
+==============================================================================
+TEST 2: Identifier manipulation
+==============================================================================
+Threat      : Attacker edits the document id in the request (?id=N) to reach another user's file
+bob requests id=1 -> DENIED (Access denied.)
+bob requests id=2 -> DENIED (Access denied.)
+bob requests id=3 -> DENIED (Access denied.)
+bob requests id=4 -> DENIED (Access denied.)
+bob requests id=999999 -> DENIED (Access denied.)
+Existing and non-existing ids give the SAME answer, so ids cannot be enumerated.
+Audit trail:
+  #2   unauthorized_access    user=2   doc=1   denied   hmac=a7b3bd8f18b6...
+  #3   unauthorized_access    user=2   doc=2   denied   hmac=2930ad2ea2b3...
+  #4   unauthorized_access    user=2   doc=3   denied   hmac=a0a681b0ee5f...
+  #5   unauthorized_access    user=2   doc=4   denied   hmac=b6505df6904e...
+  #6   unauthorized_access    user=2   doc=999999 denied   hmac=383f9e993402...
+
+==============================================================================
+TEST 3: Storage exposure
+==============================================================================
+Threat      : Attacker copies the private storage folder (and even the DB row)
+File on disk: 064f5b22-08dc-4e86-ae9b-e81b6f4539a1.enc (random UUID, original name not visible)
+Size        : 65 bytes (plaintext was 65)
+Hex dump    : a71066ba e29c5b39 5435d628 562c2d46 6c5eda3b fdb177f4 066df0d1 afe642c4 
+Contains text: no - plaintext not present in the file
+decrypt with a guessed key : FAILED  (Authentication failed: data was modified or the key is wrong.)
+What CAN be learned: file size (approx), number of files, upload timing (file mtime), and from the DB: original filenames, owners, types, sizes.
+What CANNOT be learned: contents. The DEK is stored only wrapped by the KEK, and the KEK lives outside the DB/storage in private_storage/keys.
+
+==============================================================================
+TEST 4: Document modification outside the application
+==============================================================================
+Before tamper: OK - Integrity verified: AES-GCM tag and SHA-256 fingerprint both match.
+Attack      : flipped ONE bit at byte offset 7 of the stored encrypted file
+After tamper: DETECTED - INTEGRITY FAILURE: the stored document was modified, is missing, or the key does not match.
+alice opens tampered doc -> REJECTED (Authentication failed: data was modified or the key is wrong.)
+Audit trail:
+  #1   document_upload        user=1   doc=1   success  hmac=9eed93099a92...
+  #2   document_verify        user=1   doc=1   success  hmac=e99462e764fc...
+  #3   integrity_failure      user=1   doc=1   failure  hmac=2a5f7afaa032...
+  #4   document_verify        user=1   doc=1   failure  hmac=c3373de3135d...
+  #5   integrity_failure      user=1   doc=1   failure  hmac=555693b35d07...
+
+==============================================================================
+TEST 5: Privilege misuse
+==============================================================================
+Setup       : alice shared the document with bob as VIEWER (no download)
+bob views -> ALLOWED  (expected: allowed)
+bob downloads -> DENIED (Access denied.)
+bob updates -> DENIED (Access denied.)
+bob deletes -> DENIED (Access denied.)
+bob re-shares -> DENIED (Access denied.)
+ADMIN views alice's doc -> DENIED (Access denied.)  (admin has no automatic content access)
+Document still exists: yes
+Audit trail:
+  #3   document_view          user=2   doc=1   success  hmac=8c9b0f82c60c...
+  #4   failed_authorization   user=2   doc=1   denied   hmac=3062cd71472c...
+  #5   failed_authorization   user=2   doc=1   denied   hmac=bd35243020f4...
+  #6   failed_authorization   user=2   doc=1   denied   hmac=2592a19dd8e7...
+  #7   failed_authorization   user=2   doc=1   denied   hmac=662d1d50f2b9...
+  #8   unauthorized_access    user=3   doc=1   denied   hmac=ce5da3197c9a...
+
+==============================================================================
+TEST 6: Permission revocation
+==============================================================================
+bob downloads while shared -> ALLOWED
+Action      : alice revoked bob's access
+bob views after revoke -> DENIED (Access denied.)
+bob downloads after revoke -> DENIED (Access denied.)
+LIMITATION: bob's earlier downloaded copy still exists on his machine (65 bytes). Revocation stops FUTURE access only.
+Audit trail:
+  #1   document_upload        user=1   doc=1   success  hmac=9eed93099a92...
+  #2   sharing_created        user=1   doc=1   success  hmac=241c25bb6844...
+  #3   document_download      user=2   doc=1   success  hmac=a18de8f76177...
+  #4   permission_revoked     user=1   doc=1   success  hmac=cfa5cf53f492...
+  #5   unauthorized_access    user=2   doc=1   denied   hmac=029fa89ed014...
+  #6   unauthorized_access    user=2   doc=1   denied   hmac=4d5d7cdba31e...
+
+==============================================================================
+TEST 7: Audit tampering
+==============================================================================
+Baseline    : VALID (no tampering) - 4 records
+Attack A    : modify a record (change the denied outcome of bob's attempt to 'success')
+Result A    : TAMPERING DETECTED: Record #2: HMAC mismatch (record content was modified).
+Attack B    : delete a record from the middle of the log
+Result B    : TAMPERING DETECTED: Record #2: chain broken (a previous record was removed, inserted or altered).
+Attack C    : delete the newest record (truncate the tail)
+Result C    : TAMPERING DETECTED: Chain head does not match the stored anchor (newest records were deleted or replaced).
+Restored    : VALID (no tampering)
+LIMITATION: an attacker who controls BOTH the database and private_storage/keys/hmac.key can recompute every HMAC and forge a valid chain.
+
+Done. (Scratch data only: database sdms_demo and tests/_tmp/demo_storage.)

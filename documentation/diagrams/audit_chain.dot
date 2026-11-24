@@ -1,0 +1,8 @@
+digraph G { rankdir=LR; fontname="Helvetica"; node [fontname="Helvetica", shape=record, style=filled, fillcolor="#eef3fb", color="#4a6fa5"]; edge [fontname="Helvetica", fontsize=10];
+ g [label="{GENESIS|000...0}", fillcolor="#eeeeee"];
+ r1 [label="{Record 1|prev = GENESIS|fields: user, action, doc, outcome, ip, time|hmac1 = HMAC(key, prev + fields)}"];
+ r2 [label="{Record 2|prev = hmac1|fields ...|hmac2 = HMAC(key, prev + fields)}"];
+ r3 [label="{Record 3|prev = hmac2|fields ...|hmac3 = HMAC(key, prev + fields)}"];
+ anchor [label="{anchor file (outside DB)|id:hmac of newest record}", fillcolor="#fff4d6", color="#b08900"];
+ g -> r1 -> r2 -> r3; r3 -> anchor [style=dashed, label="updated on every insert"];
+}

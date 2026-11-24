@@ -1,0 +1,7 @@
+digraph G { rankdir=LR; fontname="Helvetica"; node [fontname="Helvetica", shape=box, style="rounded,filled", fillcolor="#eef3fb", color="#4a6fa5"]; edge [fontname="Helvetica", fontsize=10];
+ subgraph cluster_untrusted { label="TB-1: Untrusted (Internet / user devices)"; style="filled,dashed"; fillcolor="#fff0f0"; color="#aa3333"; attacker [label="Attacker /\nmalicious user", fillcolor="#ffdddd"]; browser [label="Legitimate browser"]; }
+ subgraph cluster_app { label="TB-2: Application server (trusted code, enforces policy)"; style="filled,dashed"; fillcolor="#f2f8ff"; color="#4a6fa5"; app [label="PHP application\nauthN, authZ, CSRF,\nvalidation, crypto"]; }
+ subgraph cluster_data { label="TB-3: Data tier (protected at rest)"; style="filled,dashed"; fillcolor="#f2fff2"; color="#3a7d34"; db [label="MySQL\nmetadata, wrapped DEKs,\naudit chain", shape=cylinder]; files [label="Encrypted files", shape=folder]; }
+ subgraph cluster_keys { label="TB-4: Key store (separate permissions, not in DB, not in repo)"; style="filled,dashed"; fillcolor="#fffbe8"; color="#b08900"; keys [label="KEKs + HMAC key", shape=folder]; backup [label="Passphrase-encrypted\nkey backup (offline)", shape=folder]; }
+ browser -> app [label="HTTPS requests"]; attacker -> app [label="forged / tampered requests"]; app -> db; app -> files; app -> keys; keys -> backup [style=dashed, label="bin/backup.php"];
+}
