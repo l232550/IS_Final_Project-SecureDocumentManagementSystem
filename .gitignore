@@ -1,0 +1,9 @@
+.env
+private_storage/keys/*
+private_storage/documents/*
+private_storage/logs/*
+private_storage/audit_anchor.txt
+backups/
+vendor/
+tests/_tmp/
+!private_storage/**/.gitkeep
